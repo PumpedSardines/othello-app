@@ -4,7 +4,7 @@
 	"description": "",
 	"private": true,
 	"scripts": {
-		"build": "webpack --mode=production --config webpack.config.js ",
+		"build": "node build.js",
 		"watch": "webpack --watch --mode=development --config webpack.config.js "
 	},
 	"keywords": [],
