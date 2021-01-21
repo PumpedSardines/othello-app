@@ -1,4 +1,14 @@
-import Board, { COLOR } from "./Board.js";
+import Board from "./Board.js";
+import { BLACK, WHITE, isValidColor } from "./Othello.js";
+
+
+const expreimentTiles = [
+	[null, null, null, null, null],
+	[null, BLACK, null, null, null],
+	[null, null, WHITE, BLACK, null],
+	[null, null, null, null, null],
+	[null, null, null, null, null],
+];
 
 class Game {
 	constructor(selector, board = new Board({ startPosition: true })) {
@@ -16,15 +26,16 @@ class Game {
 		this.ctx = this.canvas.getContext('2d');
 
 		this.players = {
-			[COLOR.Black]: {
-				func: () => new Promise(() => {}),
+			[BLACK]: {
+				func: () => new Promise(() => { }),
 				showPlaceable: true
 			},
-			[COLOR.White]: {
-				func: () => new Promise(() => {}),
+			[WHITE]: {
+				func: () => new Promise(() => { }),
 				showPlaceable: true
 			}
 		};
+		this.turn = BLACK;
 
 		// on "function" arrays
 		// these are called on things
@@ -32,11 +43,12 @@ class Game {
 	}
 
 	setPlayer(color, options = {}, func) {
-		if(this.board.isValidColor(color)) {
+		if (!isValidColor(color)) {
 			throw new Error(`Color ${color} isn't a valid color`);
 		}
 		this.players[color].func = func;
 		this.players[color].showPlaceable = options.showPlaceable || this.players[color].showPlaceable;
+		return this;
 	}
 
 	onMove(func) {
@@ -68,7 +80,22 @@ class Game {
 
 		window.addEventListener("resize", _ => this.updateCanvas());
 
+		this.players[BLACK].func({ bord: this.board.clone() }).then(v => {
+
+		})
+
 		return this;
+	}
+
+	async runMove() {
+		if (this.turn === BLACK) {
+			const move = await this.players[BLACK].func(this);
+			this.board.makeMove(move.x, move.y, BLACK);
+		} else {
+			const move = await this.players[WHITE].func(this);
+			this.board.makeMove(move.x, move.y, WHITE);
+		}
+		this.runMove();
 	}
 
 	/**
@@ -76,11 +103,15 @@ class Game {
 	 */
 	render() {
 		const { ctx, canvas: { width }, board } = this;
-		const tileSize = width / 8;
-		const placeableTiles = board.getPlaceable();
+		const tileSize = width / board.xSize;
+		const placeableTiles = board.getPlaceable(BLACK);
 
-		for (let x = 0; x < 8; x++) {
-			for (let y = 0; y < 8; y++) {
+		for (let x = 0; x < board.xSize; x++) {
+			for (let y = 0; y < board.ySize; y++) {
+				// Get information about the current tiles
+				const color = board.getPos(x, y);
+
+
 				// First go trough and draw every tile
 				ctx.beginPath();
 				ctx.rect(tileSize * x, tileSize * y, tileSize, tileSize);
@@ -91,14 +122,13 @@ class Game {
 				ctx.stroke();
 
 				// Draw tiles
-				const color = board.getPos(x, y);
 
 				if (color !== null) {
 					switch (color) {
-						case COLOR.Black:
+						case BLACK:
 							ctx.fillStyle = "#000";
 							break;
-						case COLOR.White:
+						case WHITE:
 							ctx.fillStyle = "#fff";
 							break;
 					}
