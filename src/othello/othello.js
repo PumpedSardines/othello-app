@@ -1,5 +1,0 @@
-class Othello {
-	constructor(input) {
-
-	}
-}
